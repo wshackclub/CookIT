@@ -1,0 +1,11 @@
+Recipe Name: Pancakes
+Ingredients: flour, milk, eggs, sugar
+Instructions: Mix ingredients and cook on a pan.
+
+Recipe Name: Cake
+Ingredients: flour, sugar, butter, eggs
+Instructions: Mix ingredients and bake at 350°F for 30 minutes.
+
+Recipe Name: Omelette
+Ingredients: eggs, cheese, tomato
+Instructions: Whisk eggs, cook in a pan, and add veggies or cheese.

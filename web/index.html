@@ -8,10 +8,12 @@
 </head>
 <body>
 
+<!-- Navigation Bar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <a class="navbar-brand" href="#">CookIT</a>
 </nav>
 
+<!-- Main Section -->
 <div class="container my-4">
     <h1 class="text-center">Find Recipes With Your Ingredients!</h1>
     
@@ -25,55 +27,58 @@
     <div id="recipeResults" class="mt-4"></div>
 </div>
 
-<!-- Recipe Card Template -->
-<div class="card mt-3 d-none" id="recipeCardTemplate">
-    <div class="card-body">
-        <h5 class="card-title">Recipe Name</h5>
-        <p class="card-text">Instructions: Make the dish using the listed ingredients!</p>
-        <p class="card-text"><strong>Missing Ingredients:</strong> <span class="missing-ingredients">None</span></p>
-        <button class="btn btn-secondary btn-sm" onclick="showSubstitutes(this)">Show Substitutes</button>
-        <div class="substitute-options mt-3 d-none">
-            <p><strong>Substitute Ideas:</strong></p>
-            <ul class="list-group"></ul>
-        </div>
-    </div>
-</div>
-
+<!-- Footer -->
 <footer class="bg-light text-center py-3 mt-5">
     <p>&copy; 2025 CookIT. Find Recipes Easily! 🍳</p>
 </footer>
 
 <script>
-    function findRecipes() {
+    async function fetchRecipes() {
+        try {
+            const response = await fetch('recipes.txt');
+            const text = await response.text();
+            return parseRecipes(text);
+        } catch (error) {
+            console.error("Error loading recipes:", error);
+            return [];
+        }
+    }
+
+    function parseRecipes(data) {
+        const recipes = [];
+        const entries = data.split("\n\n");
+
+        entries.forEach(entry => {
+            const lines = entry.split("\n");
+            let recipe = { name: "", ingredients: [], instructions: "" };
+
+            lines.forEach(line => {
+                if (line.startsWith("Recipe Name: ")) {
+                    recipe.name = line.replace("Recipe Name: ", "").trim();
+                } else if (line.startsWith("Ingredients: ")) {
+                    recipe.ingredients = line.replace("Ingredients: ", "").trim().split(", ");
+                } else if (line.startsWith("Instructions: ")) {
+                    recipe.instructions = line.replace("Instructions: ", "").trim();
+                }
+            });
+
+            if (recipe.name && recipe.ingredients.length && recipe.instructions) {
+                recipes.push(recipe);
+            }
+        });
+
+        return recipes;
+    }
+
+    async function findRecipes() {
         const input = document.getElementById('ingredients').value.trim();
-        if (input === '') {
+        if (!input) {
             alert("Please enter some ingredients!");
             return;
         }
 
-        const userIngredients = input.toLowerCase().split(',').map(item => item.trim());
-
-        // Mock recipe data (Replace with real API fetch)
-        const recipes = [
-            {
-                name: "Pancakes",
-                instructions: "Mix ingredients and cook on a pan.",
-                ingredients: ["flour", "milk", "eggs", "sugar"],
-                substitutes: { "milk": "Almond Milk", "butter": "Margarine" }
-            },
-            {
-                name: "Cake",
-                instructions: "Mix ingredients and bake at 350°F for 30 minutes.",
-                ingredients: ["flour", "sugar", "butter", "eggs"],
-                substitutes: { "eggs": "Applesauce", "butter": "Coconut Oil" }
-            },
-            {
-                name: "Omelette",
-                instructions: "Whisk eggs, cook in a pan, and add veggies or cheese.",
-                ingredients: ["eggs", "cheese", "tomato"],
-                substitutes: { "cheese": "Nutritional Yeast" }
-            }
-        ];
+        const userIngredients = input.toLowerCase().split(',').map(i => i.trim());
+        const recipes = await fetchRecipes();
 
         const resultsDiv = document.getElementById('recipeResults');
         resultsDiv.innerHTML = '';
@@ -82,33 +87,20 @@
             const missing = recipe.ingredients.filter(item => !userIngredients.includes(item));
             const missingText = missing.length ? missing.join(', ') : "None";
 
-            const cardTemplate = document.getElementById('recipeCardTemplate');
-            const cardClone = cardTemplate.cloneNode(true);
-            cardClone.classList.remove('d-none');
-
-            cardClone.querySelector('.card-title').textContent = recipe.name;
-            cardClone.querySelector('.card-text').textContent = `Instructions: ${recipe.instructions}`;
-            cardClone.querySelector('.missing-ingredients').textContent = missingText;
-
-            const substituteList = cardClone.querySelector('.list-group');
-            substituteList.innerHTML = '';
-            missing.forEach(miss => {
-                if (recipe.substitutes[miss]) {
-                    const listItem = document.createElement('li');
-                    listItem.classList.add('list-group-item');
-                    listItem.textContent = `${miss} ➡️ ${recipe.substitutes[miss]}`;
-                    substituteList.appendChild(listItem);
-                }
-            });
-
-            resultsDiv.appendChild(cardClone);
+            const card = document.createElement('div');
+            card.classList.add('card', 'mt-3');
+            card.innerHTML = `
+                <div class="card-body">
+                    <h5 class="card-title">${recipe.name}</h5>
+                    <p class="card-text"><strong>Ingredients:</strong> ${recipe.ingredients.join(', ')}</p>
+                    <p class="card-text"><strong>Instructions:</strong> ${recipe.instructions}</p>
+                    <p class="card-text"><strong>Missing Ingredients:</strong> ${missingText}</p>
+                </div>
+            `;
+            resultsDiv.appendChild(card);
         });
-    }
-
-    function showSubstitutes(button) {
-        const substituteSection = button.closest('.card-body').querySelector('.substitute-options');
-        substituteSection.classList.toggle('d-none');
     }
 </script>
 
 </body>
+</html>
